@@ -10,28 +10,42 @@
  */
 ssize_t read_textfile(const char *filename, size_t letters)
 {
-	int fd;
-	ssize_t nrd, nwr;
-	char *buf;
+	int file_descriptor;
+	ssize_t r_bytes, w_bytes;
+	char *buffer;
 
-	if (filename)
+	if (!filename)
 		return (0);
 
-	fd = open(filename, O_RDONLY);
-
-	if (fd == -1)
+	buffer = malloc(sizeof(char) * (letters + 1));
+	if (!buffer)
 		return (0);
 
-	buf = malloc(sizeof(char) * (letters));
-	if (!buf)
+	file_descriptor = open(filename, O_RDONLY);
+	if (file_descriptor == -1)
+	{
+		free(buffer);
 		return (0);
+	}
 
-	nrd = read(fd, buf, letters);
-	nwr = write(STDOUT_FILENO, buf, nrd);
+	r_bytes = read(file_descriptor, buffer, letters);
+	if (r_bytes == -1)
+	{
+		free(buffer);
+		close(file_descriptor);
+		return (0);
+	}
 
-	close(fd);
+	buffer[r_bytes] = '\0';
+	w_bytes = write(STDOUT_FILENO, buffer, r_bytes);
+	if (w_bytes == -1 || w_bytes != r_bytes)
+	{
+		free(buffer);
+		close(file_descriptor);
+		return (0);
+	}
 
-	free(buf);
-
-	return (nwr);
+	close(file_descriptor);
+	free(buffer);
+	return (r_bytes);
 }
